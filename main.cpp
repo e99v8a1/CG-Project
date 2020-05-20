@@ -128,6 +128,22 @@ void drawGrid()
 	}	
 }
 
+//function to draw the base plane (X-Z Plane)
+void drawPlane()
+{
+	glPushMatrix();
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+ 	
+ 	glBegin(GL_QUADS);
+ 	glVertex3f(-2500.0f, -5.0f, 0.0f);
+ 	glVertex3f( 0.0f, -5.0f, 2500.0f);
+ 	glVertex3f( 2500.0f, -5.0f, 0.0f);
+	glVertex3f( 0.0f, -5.0f, -2500.0f);
+	glEnd();
+
+	glPopMatrix();
+}
+
 void lighting()
 {
 	glPushMatrix();
@@ -171,8 +187,8 @@ void display()
 		glRotatef(cam_rotz,0,0,1);
 
 		lighting();
-		
-		drawGrid();
+		drawPlane();
+		//drawGrid();
 		drawCar();
 	}
 
@@ -187,9 +203,10 @@ void display()
 		glRotatef(car_rot,0,1,0);
 		glTranslatef(-car_movx, 0, -car_movz);
 		
-		drawCar();	
 		lighting();
-		drawGrid();
+		drawPlane();
+		//drawGrid();
+		drawCar();
 	}
 
 	glutSwapBuffers();
@@ -199,14 +216,25 @@ void KeyboardInput(unsigned char key, int x, int y)
 {  
 	switch(key)
 	{
-		case 'x':	cam_rotx += 5;
+		case 'x':	if(cam_rotx <= 90)
+						cam_rotx += 5;
 					break;
 
+		case 's':	if(cam_rotx >= 5)
+						cam_rotx -= 5;
+					break;
+		
 		case 'y':	cam_roty += 5;
 					break;
-					
-		case 'z':	cam_rotz += 5;
+
+		case 'z':	if(cam_rotz <= 35)
+						cam_rotz += 5;
 					break;
+
+		case 'a':	if(cam_rotz >= -45)
+						cam_rotz -= 5;
+					break;
+
 
 		case 'v': 	view = (view + 1) % 2;			
 	}
