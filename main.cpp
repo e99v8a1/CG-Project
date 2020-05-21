@@ -19,6 +19,9 @@ float car_movx = 0, car_movz = 0;
 //variable to toggle camera view
 int view = 0;
 
+//variables for controlling zoom
+float zoom = 0, zfac;
+
 // function to draw wheel
 void drawWheel(float x, float y, float z)
 {	
@@ -132,13 +135,14 @@ void drawGrid()
 void drawPlane()
 {
 	glPushMatrix();
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
  	
  	glBegin(GL_QUADS);
- 	glVertex3f(-2500.0f, -5.0f, 0.0f);
- 	glVertex3f( 0.0f, -5.0f, 2500.0f);
- 	glVertex3f( 2500.0f, -5.0f, 0.0f);
-	glVertex3f( 0.0f, -5.0f, -2500.0f);
+ 	glColor3f(0,1,0);
+ 	glVertex3f(-2500.0f, -4.0f, 0.0f);
+ 	glVertex3f( 0.0f, -4.0f, 2500.0f);
+ 	glVertex3f( 2500.0f, -4.0f, 0.0f);
+	glVertex3f( 0.0f, -4.0f, -2500.0f);
 	glEnd();
 
 	glPopMatrix();
@@ -178,13 +182,18 @@ void display()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();
 
+	//zooming restriction
+	zfac = -50-zoom;
+	if(zfac >= 0) zfac = 0;
+
 	if(view == 0)
 	{
 		//setting up camera
-		glTranslatef(0,0,-50);
+		glTranslatef(0,0,zfac);
 		glRotatef(cam_rotx,1,0,0);
 		glRotatef(cam_roty,0,1,0);
 		glRotatef(cam_rotz,0,0,1);
+		
 
 		lighting();
 		drawPlane();
@@ -195,7 +204,7 @@ void display()
 	else
 	{
 		//setting up camera
-		glTranslatef(0,0,-50);
+		glTranslatef(0,0,zfac);
 		glRotatef(cam_rotx,1,0,0);
 		glRotatef(cam_roty - 45,0,1,0);
 		glRotatef(cam_rotz,0,0,1);
@@ -216,7 +225,7 @@ void KeyboardInput(unsigned char key, int x, int y)
 {  
 	switch(key)
 	{
-		case 'x':	if(cam_rotx <= 90)
+		case 'x':	if(cam_rotx <= 175)
 						cam_rotx += 5;
 					break;
 
@@ -235,8 +244,14 @@ void KeyboardInput(unsigned char key, int x, int y)
 						cam_rotz -= 5;
 					break;
 
+		case 'v': 	view = (view + 1) % 2;
+					break;
 
-		case 'v': 	view = (view + 1) % 2;			
+		case 'c': 	zoom -=  10;
+					break;
+
+		case 'd': 	zoom +=  10;
+					break;			
 	}
 
 	glutPostRedisplay();
