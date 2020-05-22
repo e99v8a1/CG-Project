@@ -31,6 +31,9 @@ int trx = 0, trz = -10;
 //variables for controlling zoom
 float zoom = 0, zfac;
 
+//variable to control sun/moon movement
+float sun = 10, sunrate = 0.1;
+
 // function to draw wheel
 void drawWheel(float x, float y, float z)
 {	
@@ -121,14 +124,17 @@ void drawTree(int x, int z)
 {
 	//trunk of the tree
 	glPushMatrix();
+	
 	translate(x,z);
 	glScalef(1,3,1);
 	glColor3f(0.75,0.2545,0.2545);
 	glutSolidCube(2);
+	
 	glPopMatrix();
 
 	//upper green part of the tree
 	glPushMatrix();
+	
 	translate(x,z);
 	glRotated(90, -1.0, 0.0, 0.0);
 	glColor3f(0.2456,0.75,0.2456);
@@ -179,24 +185,27 @@ void drawPlane()
 
 void lighting()
 {
+	float theta = sun * (PI/180);
+	float srcx = 200 * cos(theta);
+	float srcy = 200 * sin(theta);
+
 	glPushMatrix();
 
 	//sun
 	if (md == 0)
 	{
 		glColor3f(1,1,1);
-		glTranslatef(200, 200, 0);
+		glTranslatef(srcx, srcy, 0);
 		glutSolidCube(5);
-		glTranslatef(-200, -200, 0);
+		glTranslatef(-srcx, -srcy, 0);
 
 		//adding ambient, diffuse and specular models
 		GLfloat light_ambient[] = {0.2, 0.2, 0.2, 1.0}; 
 		GLfloat light_diffuse[] = {0.8, 0.8, 0.8, 1.0}; 
 		GLfloat light_specular[] = {0.5, 0.5, 0.5, 1.0}; 
-		GLfloat light_position[] = {100.0, 100.0, 0.0, 1.0};
+		GLfloat light_position[] = {srcx/2, srcy/2, 0.0, 1.0};
 
 		glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient); 
-		glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
 		glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
 		glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular); 
 		glLightfv(GL_LIGHT0, GL_POSITION, light_position); 
@@ -204,24 +213,23 @@ void lighting()
 		glEnable(GL_LIGHTING);
 		glEnable(GL_LIGHT0);
 		glEnable(GL_COLOR_MATERIAL);
-	 
 	}
+
 	//moon
 	else
 	{
 		glColor3f(1,1,0);
-		glTranslatef(200, 200, 0);
+		glTranslatef(srcx, srcy, 0);
 		glutSolidCube(5);
-		glTranslatef(-200, -200, 0);
+		glTranslatef(-srcx, -srcy, 0);
 
 		//adding ambient, diffuse and specular models
 		GLfloat light_ambient[] = {0.2, 0.2, 0.2, 1.0}; 
 		GLfloat light_diffuse[] = {0.9, 0.9, 0.9, 1.0}; 
 		GLfloat light_specular[] = {0.3, 0.3, 0.3, 1.0}; 
-		GLfloat light_position[] = {100.0, 100.0, 0.0, 1.0}; 	
+		GLfloat light_position[] = {srcx/2, srcy/2, 0.0, 1.0}; 	
 
 		glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient); 
-		glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
 		glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
 		glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular); 
 		glLightfv(GL_LIGHT0, GL_POSITION, light_position); 
@@ -230,6 +238,7 @@ void lighting()
 		glEnable(GL_LIGHT0);
 		glEnable(GL_COLOR_MATERIAL);
 	}
+
 	glPopMatrix();
 }
 
@@ -240,7 +249,11 @@ void display()
 
 	//zooming restriction
 	zfac = -50-zoom;
-	if(zfac >= 0) zfac = 0;
+	if(zfac >= 0) 
+	{
+		zfac = 0;
+		zoom = -50;
+	}	
 
 	if(view == 0)
 	{
@@ -305,7 +318,14 @@ void KeyboardInput(unsigned char key, int x, int y)
 					break;
 
 		case 'd': 	zoom +=  10;
-					break;			
+					break;	
+
+		case 'l': 	sunrate += 0.1;
+					break;
+
+		case 'k':	if(sunrate > 0.1)
+						sunrate -= 0.1;
+					break;									
 	}
 	glutPostRedisplay();
 }  
@@ -338,13 +358,9 @@ void MouseInput(int key, int state, int x, int y)
 		
 	//switch between day mode and night mode
 	if(key == GLUT_LEFT_BUTTON && state == GLUT_UP)
-	{
-		if(md == 1)
-			glClearColor(0.2,0.2,0.2,1);
-		else
-			glClearColor(0.5,0.5,1,1);
 		md = (md + 1)%2;
-	}
+	
+
 	glutPostRedisplay();
 }
 
@@ -367,6 +383,25 @@ void init()
  	glClearColor(0.5,0.5,1,1);
 }
 
+//timer function to control day time
+void timer(int t)
+{
+	float theta = sun * (PI/180);
+	glutTimerFunc(10, timer, 0);
+
+	sun += sunrate;
+
+	if(sun > 180)
+		sun = 0;
+	
+	glutPostRedisplay();
+
+	if(md == 0)
+		glClearColor(abs(cos(theta)),0,abs(sin(theta)),0.5);
+	else 
+		glClearColor(abs(0.2*cos(theta)), abs(0.2*cos(theta)), abs(0.2*cos(theta)),0.5);
+}
+
 int main(int argc, char **argv)
 {
 	glutInit(&argc, argv);
@@ -380,7 +415,7 @@ int main(int argc, char **argv)
 	glutKeyboardFunc(KeyboardInput);
 	glutMouseFunc(MouseInput);
 	init();
-	
+	glutTimerFunc(10, timer, 0);
 	glutMainLoop();
 
  	return 0;
