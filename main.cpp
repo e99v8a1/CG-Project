@@ -2,13 +2,14 @@
 #include <GL/glut.h>
 #include <math.h>
 #include "custtran.h"
+#include <stdlib.h>
 
 using namespace std;
 
 #define PI 3.14159
 
 //dynamic rotating angles for camera 
-float cam_rotx = 0, cam_roty = -45, cam_rotz = 0;
+float cam_rotx = 20, cam_roty = -45, cam_rotz = 0;
 
 //dynamic rotating angle for car 
 float car_rot = 0;
@@ -26,13 +27,16 @@ int headlights = 0;
 int md = 0;
 
 //variables of tree coordinates
-int trx = 0, trz = -10;
+int trx[] = {0}, trz[] = {0};
 
 //variables for controlling zoom
 float zoom = 0, zfac;
 
 //variable to control sun/moon movement
 float sun = 10, sunrate = 0.1;
+
+//random no of trees
+int n = rand() % 200 + 5;
 
 // function to draw wheel
 void drawWheel(float x, float y, float z)
@@ -278,11 +282,10 @@ void display()
 
 	lighting();
 	drawPlane();
-	
-	//trx = rand()*10;
-	//trz = rand()*10;
 	drawCar();
-	drawTree(trx,trz);
+	for(int i=0;i<n;i++)
+		drawTree((trx[i]-500) ,(trz[i]-500));
+	
 	//drawGrid();
 	glutSwapBuffers();
 }
@@ -311,7 +314,7 @@ void KeyboardInput(unsigned char key, int x, int y)
 					break;
 
 		case 'v': 	view = (view + 1) % 2;
-					md = (md + 1) % 2;
+					//md = (md + 1) % 2;
 					break;
 
 		case 'c': 	zoom -=  10;
@@ -409,7 +412,13 @@ int main(int argc, char **argv)
 	 	
 	glutInitWindowSize(1000,800);
 	glutCreateWindow("CG Project");
-	 	
+	
+	for(int i=0;i<n;i++)
+	{
+		trx[i] = (rand() % 1000);
+		trz[i] = (rand() % 1000);
+	}
+
 	glutDisplayFunc(display);
 	glutSpecialFunc(SpecialInput);
 	glutKeyboardFunc(KeyboardInput);
