@@ -1,9 +1,9 @@
 #include <iostream>
 #include <GL/glut.h>
+#include <GL/gl.h>
 #include <math.h>
 #include "custtran.h"
 #include <stdlib.h>
-#include <SOIL.h>
 
 using namespace std;
 
@@ -24,8 +24,8 @@ int view = 0;
 //variable to change color headlights
 int hl = 0;
 
-//variable to switch between day mode and night node
-int md = 0;
+//variable to change color of body
+int bcolor = 0;
 
 //variables of tree coordinates
 int trx[] = {0}, trz[] = {0};
@@ -37,7 +37,10 @@ float zoom = 0, zfac;
 float sun = 10, sunrate = 0.1;
 
 //random no of trees
-int n = 100;
+int n = 350;
+
+//variable to increase speed
+int spd =1;
 
 // function to draw wheel
 void drawWheel(float x, float y, float z)
@@ -72,7 +75,18 @@ void drawCar()
 
 	glColor3f(0,0,0);
 	glutWireCube(3);
-	glColor3f(1,0,0);
+	switch(bcolor)
+	{
+		case 0: glColor3f(1,0.15,0);
+				break;
+
+		case 1: glColor3f(1,1,0);
+				break;
+
+		case 2: glColor3f(1,0.3333,0.6667);
+				break;
+	}
+	
 	glutSolidCube(3);
 
 	glPopMatrix();
@@ -130,6 +144,7 @@ void drawCar()
 		glDisable(GL_LIGHT2);
 		glDisable(GL_LIGHT3);
 	}
+
 	else
 	{	
 		glColor3f(1,1,0);
@@ -384,7 +399,6 @@ void display()
 	lightingMoon();
 	drawPlane();
 	drawCar();
-	
 
 	for(int i = 0; i < n; i++)
 		drawTree(trx[i] ,trz[i]);
@@ -417,7 +431,6 @@ void KeyboardInput(unsigned char key, int x, int y)
 					break;
 
 		case 'v': 	view = (view + 1) % 2;
-					//md = (md + 1) % 2;
 					break;
 
 		case 'c': 	zoom -=  10;
@@ -432,7 +445,15 @@ void KeyboardInput(unsigned char key, int x, int y)
 		case 'k':	if(sunrate > 0.1)
 						sunrate -= 0.1;
 					break;									
+		
+		case 't':  	spd +=5;
+					break;
+
+		case 'r':  	if(spd>1)
+						spd -=5;
+					break;
 	}
+
 	glutPostRedisplay();
 }  
 
@@ -440,12 +461,12 @@ void SpecialInput(int key, int x, int y)
 {
 	switch(key)
 	{
-		case GLUT_KEY_UP: 		car_movx -= cos(car_rot * (PI/180));
-								car_movz -= sin(car_rot * (PI/180));
+		case GLUT_KEY_UP: 		car_movx -= spd*cos(car_rot * (PI/180));
+								car_movz -= spd*sin(car_rot * (PI/180));
 								break;
 
-		case GLUT_KEY_DOWN: 	car_movx += cos(car_rot * (PI/180));
-								car_movz += sin(car_rot * (PI/180));
+		case GLUT_KEY_DOWN: 	car_movx += spd*cos(car_rot * (PI/180));
+								car_movz += spd*sin(car_rot * (PI/180));
 								break;
 
 		case GLUT_KEY_RIGHT:  	car_rot += 5;
@@ -459,10 +480,11 @@ void SpecialInput(int key, int x, int y)
 
 void MouseInput(int key, int state, int x, int y)
 {
+	//change color of body
+	if(key == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
+		bcolor = (bcolor+1) % 3;
+
 	//headlights on/off
-	//if(key == GLUT_RIGHT_BUTTON && state == GLUT_DOWN)
-		
-	//switch between day mode and night mode
 	if(key == GLUT_LEFT_BUTTON && state == GLUT_UP)
 		hl = (hl + 1) % 2;
 	
@@ -484,8 +506,6 @@ void init()
 	glDepthFunc(GL_LESS); 
 
 	glEnable(GL_LINE_SMOOTH);
-
- 	//glClearColor(0.5,0.5,1,1);
 }
 
 //timer function to control day time
@@ -523,8 +543,8 @@ int main(int argc, char **argv)
 
 		while(chk)
 		{
-			trx[i] = (rand() % 1000) - 500;
-			trz[i] = (rand() % 1000) - 500;
+			trx[i] = (rand() % 2000) - 1000;
+			trz[i] = (rand() % 2000) - 1000;
 
 			float x0 =  trx[i];
 			float z0 = 	trz[i];
