@@ -3,6 +3,7 @@
 #include <math.h>
 #include "custtran.h"
 #include <stdlib.h>
+#include <SOIL.h>
 
 using namespace std;
 
@@ -21,7 +22,7 @@ float car_movx = 0, car_movz = 0;
 int view = 0;
 
 //variable to change color headlights
-int headlights = 0;
+int hl = 0;
 
 //variable to switch between day mode and night node
 int md = 0;
@@ -36,7 +37,7 @@ float zoom = 0, zfac;
 float sun = 10, sunrate = 0.1;
 
 //random no of trees
-int n = rand() % 200 + 5;
+int n = 100;
 
 // function to draw wheel
 void drawWheel(float x, float y, float z)
@@ -120,6 +121,74 @@ void drawCar()
 	}
 
  	glLineWidth(1);
+
+ 	glPushMatrix();
+
+	if(hl == 0)
+	{	
+		glColor3f(1,1,1);
+		glDisable(GL_LIGHT2);
+		glDisable(GL_LIGHT3);
+	}
+	else
+	{	
+		glColor3f(1,1,0);
+
+		//lighting for headlights
+		float dir[3] = {-1,0,0};
+
+		GLfloat light_ambient[] = {0.2, 0.2, 0.2, 1.0}; 
+		GLfloat light_diffuse[] = {0.8, 0.8, 0.8, 1}; 
+		GLfloat light_specular[] = {1, 1, 1, 0.5}; 
+		GLfloat light_position1[] = {-4.6, -3, -1.05, 1.0};
+		GLfloat light_position2[] = {-4.6, -3, 1.05, 1.0};
+
+		glLightfv(GL_LIGHT2, GL_AMBIENT, light_ambient); 
+		glLightfv(GL_LIGHT2, GL_DIFFUSE, light_diffuse);
+		glLightfv(GL_LIGHT2, GL_SPECULAR, light_specular); 
+		glLightfv(GL_LIGHT2, GL_POSITION, light_position1);
+		glLightfv(GL_LIGHT2, GL_SHININESS, light_diffuse); 
+
+		glLightfv(GL_LIGHT3, GL_AMBIENT, light_ambient); 
+		glLightfv(GL_LIGHT3, GL_DIFFUSE, light_diffuse);
+		glLightfv(GL_LIGHT3, GL_SPECULAR, light_specular); 
+		glLightfv(GL_LIGHT3, GL_POSITION, light_position2);
+		glLightfv(GL_LIGHT3, GL_SHININESS, light_diffuse); 
+
+		glEnable(GL_LIGHTING);
+		glEnable(GL_LIGHT2);
+		glEnable(GL_LIGHT3);
+		glEnable(GL_COLOR_MATERIAL);
+
+		//shininess
+		GLfloat specularColor[3] = {1.0, 1.0, 1.0};
+		float g_Shine = 100.0;
+		glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specularColor);
+		glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &g_Shine);
+
+		glLightfv(GL_LIGHT2, GL_SPOT_DIRECTION, dir);
+		glLightf(GL_LIGHT2, GL_SPOT_EXPONENT, 40);
+		glLightf(GL_LIGHT2, GL_SPOT_CUTOFF, 20);
+
+		glLightfv(GL_LIGHT3, GL_SPOT_DIRECTION, dir);
+		glLightf(GL_LIGHT3, GL_SPOT_EXPONENT, 40);
+		glLightf(GL_LIGHT3, GL_SPOT_CUTOFF, 20);
+	}
+
+	glBegin(GL_QUADS);
+
+	glVertex3f(-4.6,-2.5,-1.4);
+	glVertex3f(-4.6,-2.5,-0.7);
+	glVertex3f(-4.6,-3.5,-0.7);
+	glVertex3f(-4.6,-3.5,-1.4);
+
+	glVertex3f(-4.6,-2.5,1.4);
+	glVertex3f(-4.6,-2.5,0.7);
+	glVertex3f(-4.6,-3.5,0.7);
+	glVertex3f(-4.6,-3.5,1.4);
+
+	glEnd();
+	glPopMatrix();
 	glPopMatrix();
 }
 
@@ -176,74 +245,105 @@ void drawPlane()
 	glPushMatrix();
 	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
  	
- 	glBegin(GL_QUADS);
- 	glColor3f(1,0.8,0);
- 	glVertex3f(-2500.0f, -4.0f, 0.0f);
- 	glVertex3f( 0.0f, -4.0f, 2500.0f);
- 	glVertex3f( 2500.0f, -4.0f, 0.0f);
-	glVertex3f( 0.0f, -4.0f, -2500.0f);
-	glEnd();
+ 	for (float i = -2500; i < 2500; i += 100)
+ 	{
+ 		glBegin(GL_QUADS);
+
+ 		//gradient 1 color
+	 	glColor3f(1,1,1);
+	 	glVertex3f(i, -4, -2500);
+	 	
+	 	//gradient 2 color 
+	 	glColor3f(0.8,0.8,1);
+	 	glVertex3f(i,-4,2500);
+	 	
+	 	//gradient 1 color
+	 	glColor3f(1,1,1);
+	 	glVertex3f(i+100,-4,2500);
+	 	
+	 	//gradient 2 color
+	 	glColor3f(0.8,0.8,1);
+		glVertex3f(i+100,-4,-2500);
+		glEnd();	
+ 	}
 
 	glPopMatrix();
 }
 
-void lighting()
+void lightingSun()
 {
 	float theta = sun * (PI/180);
-	float srcx = 200 * cos(theta);
-	float srcy = 200 * sin(theta);
+	float srcx = 2000 * cos(theta);
+	float srcy = 2000 * sin(theta);
+
+	float R = 0.5 * abs(cos(theta));
+	float G = sin(theta);
+	float B = 0;
 
 	glPushMatrix();
 
-	//sun
-	if (md == 0)
-	{
-		glColor3f(1,1,1);
-		glTranslatef(srcx, srcy, 0);
-		glutSolidCube(5);
-		glTranslatef(-srcx, -srcy, 0);
-
-		//adding ambient, diffuse and specular models
-		GLfloat light_ambient[] = {0.2, 0.2, 0.2, 1.0}; 
-		GLfloat light_diffuse[] = {0.8, 0.8, 0.8, 1.0}; 
-		GLfloat light_specular[] = {0.5, 0.5, 0.5, 1.0}; 
-		GLfloat light_position[] = {srcx/2, srcy/2, 0.0, 1.0};
-
-		glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient); 
-		glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
-		glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular); 
-		glLightfv(GL_LIGHT0, GL_POSITION, light_position); 
-
-		glEnable(GL_LIGHTING);
-		glEnable(GL_LIGHT0);
-		glEnable(GL_COLOR_MATERIAL);
-	}
-
-	//moon
-	else
-	{
-		glColor3f(1,1,0);
-		glTranslatef(srcx, srcy, 0);
-		glutSolidCube(5);
-		glTranslatef(-srcx, -srcy, 0);
-
-		//adding ambient, diffuse and specular models
-		GLfloat light_ambient[] = {0.2, 0.2, 0.2, 1.0}; 
-		GLfloat light_diffuse[] = {0.9, 0.9, 0.9, 1.0}; 
-		GLfloat light_specular[] = {0.3, 0.3, 0.3, 1.0}; 
-		GLfloat light_position[] = {srcx/2, srcy/2, 0.0, 1.0}; 	
-
-		glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient); 
-		glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
-		glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular); 
-		glLightfv(GL_LIGHT0, GL_POSITION, light_position); 
-
-		glEnable(GL_LIGHTING);
-		glEnable(GL_LIGHT0);
-		glEnable(GL_COLOR_MATERIAL);
-	}
+	glColor3f(1,G,G);
+	glTranslatef(srcx, srcy, 0);
+	glRotatef(sun,0,0,1);
+	glutSolidCube(40);
+	glTranslatef(-srcx, -srcy, 0);
 
 	glPopMatrix();
+
+	//adding ambient, diffuse and specular models
+	GLfloat light_ambient[] = {0.2, 0.2, 0.2, 1.0}; 
+	GLfloat light_diffuse[] = {R, G, B, 1}; 
+	GLfloat light_specular[] = {0.5, 0.5, 0.5, 1.0}; 
+	GLfloat light_position[] = {srcx/2, srcy/2, 0.0, 1.0};
+
+	glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient); 
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
+	glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular); 
+	glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+	glLightfv(GL_LIGHT0, GL_SHININESS, light_diffuse); 
+
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+	glEnable(GL_COLOR_MATERIAL);
+
+	//shininess
+	GLfloat specularColor[3] = {1.0, 1.0, 1.0};
+	float g_Shine = 10.0;
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specularColor);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &g_Shine);
+}
+
+void lightingMoon()
+{
+	float theta = (sun-180) * (PI/180);
+	float srcx = 2000 * cos(theta);
+	float srcy = 2000 * sin(theta);
+
+	glPushMatrix();
+
+	glColor3f(0.8,0.8,0);
+	glTranslatef(srcx, srcy, 0);
+	glRotatef(sun-180,0,0,1);
+	glutSolidCube(40);
+	glTranslatef(-srcx, -srcy, 0);
+
+	glPopMatrix();
+
+	//adding ambient, diffuse and specular models
+	GLfloat light_ambient[] = {0.0, 0.0, 0.1, 1.0}; 
+	GLfloat light_diffuse[] = {0.4, 0.4, 0.5, 1.0}; 
+	GLfloat light_specular[] = {0.1, 0.1, 0.2, 1.0}; 
+	GLfloat light_position[] = {srcx/2, srcy/2, 0.0, 1.0};
+
+	glLightfv(GL_LIGHT1, GL_AMBIENT, light_ambient); 
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, light_diffuse);
+	glLightfv(GL_LIGHT1, GL_SPECULAR, light_specular); 
+	glLightfv(GL_LIGHT1, GL_POSITION, light_position);
+	glLightfv(GL_LIGHT1, GL_SHININESS, light_diffuse); 
+
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT1);
+	glEnable(GL_COLOR_MATERIAL);
 }
 
 void display()
@@ -280,11 +380,14 @@ void display()
 		glTranslatef(-car_movx, 0, -car_movz);
 	}
 
-	lighting();
+	lightingSun();
+	lightingMoon();
 	drawPlane();
 	drawCar();
-	for(int i=0;i<n;i++)
-		drawTree((trx[i]-500) ,(trz[i]-500));
+	
+
+	for(int i = 0; i < n; i++)
+		drawTree(trx[i] ,trz[i]);
 	
 	//drawGrid();
 	glutSwapBuffers();
@@ -345,10 +448,10 @@ void SpecialInput(int key, int x, int y)
 								car_movz += sin(car_rot * (PI/180));
 								break;
 
-		case GLUT_KEY_RIGHT:  	car_rot += 10;
+		case GLUT_KEY_RIGHT:  	car_rot += 5;
 								break;
 
-		case GLUT_KEY_LEFT: 	car_rot -= 10;
+		case GLUT_KEY_LEFT: 	car_rot -= 5;
 								break;
 	}
 	glutPostRedisplay();
@@ -361,9 +464,8 @@ void MouseInput(int key, int state, int x, int y)
 		
 	//switch between day mode and night mode
 	if(key == GLUT_LEFT_BUTTON && state == GLUT_UP)
-		md = (md + 1)%2;
+		hl = (hl + 1) % 2;
 	
-
 	glutPostRedisplay();
 }
 
@@ -373,7 +475,7 @@ void init()
 	glLoadIdentity();
 
 	//to fix the camera clipping
-	gluPerspective(60,1.0f,0.1f,1000);
+	gluPerspective(60,1.0f,0.1f,4000);
 	
 	glMatrixMode(GL_MODELVIEW);
 	
@@ -383,26 +485,27 @@ void init()
 
 	glEnable(GL_LINE_SMOOTH);
 
- 	glClearColor(0.5,0.5,1,1);
+ 	//glClearColor(0.5,0.5,1,1);
 }
 
 //timer function to control day time
 void timer(int t)
 {
 	float theta = sun * (PI/180);
-	glutTimerFunc(10, timer, 0);
+	glutTimerFunc(5, timer, 0);
 
 	sun += sunrate;
 
-	if(sun > 180)
-		sun = 0;
-	
+	if(sun >= 360)
+		sun -= 360;
+
 	glutPostRedisplay();
 
-	if(md == 0)
-		glClearColor(abs(cos(theta)),0,abs(sin(theta)),0.5);
-	else 
-		glClearColor(abs(0.2*cos(theta)), abs(0.2*cos(theta)), abs(0.2*cos(theta)),0.5);
+	float R = 0.2 * abs(cos(theta));
+	float G = 0;
+	float B = sin(theta);
+
+	glClearColor(R,G,B,0.5);
 }
 
 int main(int argc, char **argv)
@@ -413,10 +516,37 @@ int main(int argc, char **argv)
 	glutInitWindowSize(1000,800);
 	glutCreateWindow("CG Project");
 	
-	for(int i=0;i<n;i++)
+	//generating random coordinates for trees
+	for(int i = 0; i < n; i++)
 	{
-		trx[i] = (rand() % 1000);
-		trz[i] = (rand() % 1000);
+		bool chk = 1;
+
+		while(chk)
+		{
+			trx[i] = (rand() % 1000) - 500;
+			trz[i] = (rand() % 1000) - 500;
+
+			float x0 =  trx[i];
+			float z0 = 	trz[i];
+			bool same = 0;
+
+			for (int j = 0; j < i; ++j)
+			{
+				float x1 =  trx[j];
+				float z1 = 	trz[j];
+				
+				float dist = ((x1 - x0) * (x1 - x0)) + ((z1 - z0) * (z1 - z0));
+				dist = sqrt(dist);
+
+				if(dist < 20)
+				{
+					same = 1;
+				}
+			}
+
+			if(same == 0)
+				chk = 0;
+		}
 	}
 
 	glutDisplayFunc(display);
@@ -424,7 +554,7 @@ int main(int argc, char **argv)
 	glutKeyboardFunc(KeyboardInput);
 	glutMouseFunc(MouseInput);
 	init();
-	glutTimerFunc(10, timer, 0);
+	glutTimerFunc(5, timer, 0);
 	glutMainLoop();
 
  	return 0;
